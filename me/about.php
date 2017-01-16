@@ -3,7 +3,7 @@ $name = 'Александер';
 $age = 16;
 $email = 'avozmitel@mail.ru';
 $city = 'Краснодар';
-$about_myself = 'Занимаюсь написанием сайтов.';
+$about_myself = 'Занимаюсь разработкой сайтов на back end.';
 ?>
 <!DOCTYPE html>
 <html lang="ru">

@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $name = 'Александер';
 $age = 16;
 $email = 'avozmitel@mail.ru';

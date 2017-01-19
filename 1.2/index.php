@@ -4,16 +4,16 @@
 
 	$x = 1;
 	$y = 1;
-	$z = intval($_GET['number']);
+	$number = intval($_GET['number']);
 
 	while (true)
 	{
-		if ($x > $z)
+		if ($x > $number)
 		{
 			echo 'задуманное число НЕ входит в числовой ряд';
 			break;
 		}
-		if ($x === $z)
+		if ($x === $number)
 		{	
 			echo 'задуманное число входит в числовой ряд';
 			break;

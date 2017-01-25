@@ -17,32 +17,28 @@
 		)
 	);
 	
+	$array = array();
+	
 	foreach ($continent['Africa'] as $Value) {
-		$__array = explode(' ', $Value);
-		$array[0][] = $__array[0];
-		$array[1][] = $__array[1];
+		$temp = explode(' ', $Value);
+		$array[0][] = $temp[0];
+		$array[1][] = $temp[1];
+		unset($temp);
 	}
 	foreach ($continent['Australia'] as $Value) {
-		$__array = explode(' ', $Value);
-		$array[0][] = $__array[0];
-		$array[1][] = $__array[1];
+		$temp = explode(' ', $Value);
+		$array[0][] = $temp[0];
+		$array[1][] = $temp[1];
+		unset($temp);
 	}
 	
-	$RANDOM = array();
+	$random = array(
+		0 => array(0,1,2,3,4,5,6,7),
+		1 => array(7,6,5,4,3,2,1,0)
+	);
 	
-	for ($i=0; $i<8; ++$i) {
-		$rnd = mt_rand(0, 7 - count($RANDOM));
-		foreach ($RANDOM as $v) if ($rnd >= $v) ++$rnd;
-		$RANDOM[] = $rnd;
-		sort($RANDOM);
-		
-	}
-	
-	$random[0] = $RANDOM;
-	$random[1] = $RANDOM;
 	shuffle($random[0]);
 	shuffle($random[1]);
-	
 	
 	foreach ($array[0] as $Key => $Value) {
 		$result[] = $array[0][$random[0][$Key]];

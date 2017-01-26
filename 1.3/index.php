@@ -24,8 +24,6 @@
 	);
 	
 	$array = array();
-	$random = array();
-	$quantity = 0;
 	
 	foreach ($continent['Africa'] as $Value) {
 		if (str_word_count($Value) == 2) {
@@ -33,16 +31,14 @@
 			$array[0][] = $temp[0];
 			$array[1][] = $temp[1];
 			unset($temp);
-			$quantity++;
 		}
 	}
 	foreach ($continent['Australia'] as $Value) {
-		if (str_word_count($Value) === 2) {
+		if (str_word_count($Value) == 2) {
 			$temp = explode(' ', $Value);
 			$array[0][] = $temp[0];
 			$array[1][] = $temp[1];
 			unset($temp);
-			$quantity++;
 		}
 	}
 	

@@ -46,26 +46,12 @@
 		}
 	}
 	
-	$i = 0;
-	while( $i <= ($quantity - 1) ){
-		$random[] = $i;
-		$i++;
-	}
-
-	shuffle($random);
+	shuffle($array[0]);
+	shuffle($array[1]);
 	
 	foreach ($array[0] as $Key => $Value) {
-		$result[] = $array[0][$random[$Key]];
+		if ($Key == 0) echo $Value.' '.$array[1][$Key];
+		else echo '<br><br>'.$Value.' '.$array[1][$Key];
 	}
 	
-	shuffle($random);
-	
-	foreach ($array[1] as $Key => $Value) {
-		$result[$Key] .= ' '.$array[1][$random[$Key]];
-	}
-	
-	foreach ($result as $Key => $Value) {
-		if ($Key == 0) echo $Value;
-		else echo '<br>'.$Value;
-	} 
 ?>

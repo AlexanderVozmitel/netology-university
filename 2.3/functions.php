@@ -14,11 +14,11 @@ function GenCertificate($name, $result)
     $textColor = imagecolorallocate($im, 0, 172, 238);
 	$rightColor = imagecolorallocate($im, 84, 134, 30);
 	$errorColor = imagecolorallocate($im, 223, 77, 50);
-    $fontFile = __DIR__ . '/resource/PTSerifBold.ttf';
+    $fontFile = __DIR__ . '/resource/CirceWebBold.ttf';
     imagefill($im, 0, 0, $backColor);
 	$box = imagettfbbox(11, 0, $fontFile, 'Имя: '.$name);
 	$left = $CENTER-round(($box[2]-$box[0])/2);
-	imagettftext($im, 11, 0, $left, 20, $textColor, $fontFile, 'Имя: '.$name);
+	imagettftext($im, 11, 0, $left, 40, $textColor, $fontFile, 'Имя: '.$name);
 	imagettftext($im, 11, 0, 20, 80, $rightColor, $fontFile, 'Правильных ответов: '.$result['right']);
 	imagettftext($im, 11, 0, 20, 100, $errorColor, $fontFile, 'Неправильных ответов: '.$result['error']);
 	

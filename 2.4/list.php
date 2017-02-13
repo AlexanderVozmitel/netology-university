@@ -8,10 +8,13 @@
 		exit('<center><h1>Вы не авторизованы.<h1></center>');
 	}
 	
-	if (isset($_GET['del']))
+	if (isset($_GET['del']) )
 	{
-		unlink(TEST_DIR.$_GET['del'].'.json');
-		Location(URL_ADDRESS.'list.php');
+		if (isset($_SESSION['AUTH_LOGIN']))
+		{
+			unlink(TEST_DIR.$_GET['del'].'.json');
+			Location(URL_ADDRESS.'list.php');
+		}
 	}
 ?>
 <html lang="ru">
@@ -39,7 +42,9 @@
 					if ($Value != '.' and $Value != '..')
 					{
 						$Value = substr($Value, 0, -5);
-						echo  '<div class="link"><a href="test.php?number='.$Value.'"> Тест №'.$Value.'</a><a href="list.php?del='.$Value.'" class="link_del">Удалить Тест</a></div>'."\r\n";
+						$del = null;
+						if (isset($_SESSION['AUTH_LOGIN'])) $del = '<a href="list.php?del='.$Value.'" class="link_del">Удалить Тест</a>';
+						echo  '<div class="link"><a href="test.php?number='.$Value.'"> Тест №'.$Value.'</a>'.$del.'</div>'."\r\n";
 					}
 				}
 			?>

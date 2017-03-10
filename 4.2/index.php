@@ -11,11 +11,13 @@
 	{
 		if ($_POST['save'] == 'Добавить' and !empty($_POST['description']))
 		{
+			$_POST['description'] = nl2br(htmlspecialchars(trim($_POST['description']), ENT_QUOTES), false);
 			mysqli_query($CONNECT, "INSERT INTO `tasks` (`id`, `description`, `is_done`, `date_added`) VALUES (NULL, '${_POST['description']}', 0, NOW())");
 			header('Location: /u/vozmitel/4.2/');
 		}
 		else if ($_POST['save'] == 'Сохранить' and !empty($_POST['update_description']) and isset($_GET['id']))
 		{
+			$_POST['update_description'] = nl2br(htmlspecialchars(trim($_POST['update_description']), ENT_QUOTES), false);
 			mysqli_query($CONNECT, "UPDATE `tasks` SET `description` = '${_POST['update_description']}' WHERE `id` = '${_GET['id']}'");
 			header('Location: /u/vozmitel/4.2/');
 		}
@@ -37,7 +39,8 @@
 		{
 			$text .= '<td><span style="color: orange;">В процессе</span></td>';
 		}
-		$text .= '<td><a href="?id='.$Row['id'].'&amp;action=edit">Изменить</a> <a href="?id='.$Row['id'].'&amp;action=done">Выполнить</a> <a href="?id='.$Row['id'].'&amp;action=delete">Удалить</a></td></tr>';
+		$text .= '<td><a href="?id='.$Row['id'].'&amp;action=edit">Изменить</a> <a href="?id='.$Row['id'].'&amp;action=done">Выполнить</a> <a href="?id='.$Row['id'].'&amp;action=delete">Удалить</a></td>';
+		$text .='</tr>';
 		$i++;
 	}
 	if ($i <= 0)

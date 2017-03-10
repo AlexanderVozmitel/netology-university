@@ -8,11 +8,13 @@
 	{
 		if ($_POST['save'] == 'Добавить' and !empty($_POST['description']))
 		{
+			$_POST['description'] = FormChars($_POST['description']);
 			mysqli_query($CONNECT, "INSERT INTO `task` (`id`, `user_id`, `assigned_user_id`, `description`, `is_done`, `date_added`) VALUES (NULL, '${_SESSION['LOGIN_ID']}', NULL, '${_POST['description']}', '0', NOW());");
 			Location(URL_ADDRESS);
 		}
 		else if ($_POST['save'] == 'Сохранить' and !empty($_POST['update_description']) and isset($_GET['id']))
 		{
+			$_POST['update_description'] = FormChars($_POST['update_description']);
 			mysqli_query($CONNECT, "UPDATE `task` SET `description` = '${_POST['update_description']}' WHERE user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
 			Location(URL_ADDRESS);
 		}

@@ -34,67 +34,9 @@
 	}
 	
 	
-	if (!isset($_POST['sort_by'])) $_POST['sort_by'] = 'date_added';
-	$Result = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
-	
-	$my_tasks = '';
-	$select = '';
-	$i = 0;
-	
-	while ($Row = mysqli_fetch_assoc($Result)) {
-		$my_tasks .= '<tr> <td>'.$Row['description'].'</td> <td>'.$Row['date_added'].'</td>';
-		if ($Row['is_done'] == 1) 
-		{
-			$my_tasks .= '<td><span style="color: green;">Выполнено</span></td>';
-		}
-		else
-		{
-			$my_tasks .= '<td><span style="color: orange;">В процессе</span></td>';
-		}
-		$my_tasks .= '<td><a href="?id='.$Row['id'].'&amp;action=edit">Изменить</a> ';
-		if (empty($Row['assigned_user_id'])) $my_tasks .= '<a href="?id='.$Row['id'].'&amp;action=done">Выполнить</a>';
-		$my_tasks .= ' <a href="?id='.$Row['id'].'&amp;action=delete">Удалить</a></td>';
-		foreach ($users as $Key => $Value) 
-		{
-			if ($Key != $_SESSION['LOGIN_ID'] AND $Key != null) $select .= '<option value="user_'.$Key.'_task_'.$Row['id'].'">'.$Value.'</option>';
-		}
-		$my_tasks .='<td>'.$users[$Row['assigned_user_id']].'</td>';
-		$my_tasks .='<td>'.$Row['author'].'</td>';
-		$my_tasks .='<td> <form method="POST"><select name="assigned_user_id">'.$select.'</select> <input type="submit" name="assign" value="Переложить ответственность"></form> </td>';
-		$my_tasks .='</tr>';
-		$i++;
-	}
-	if ($i <= 0)
-	{
-		$my_tasks = '<tr> <td colspan="7">Нет данных.</td> </tr>';
-	}
-	
-	$Result = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE task.assigned_user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
-	$tasks = '';
-	$i = 0;
-
-	while ($Row = mysqli_fetch_assoc($Result)) {
-		$tasks .= '<tr> <td>'.$Row['description'].'</td> <td>'.$Row['date_added'].'</td>';
-		if ($Row['is_done'] == 1) 
-		{
-			$tasks .= '<td><span style="color: green;">Выполнено</span></td>';
-		}
-		else
-		{
-			$tasks .= '<td><span style="color: orange;">В процессе</span></td>';
-		}
-		$tasks .= '<td><a href="?id='.$Row['id'].'&amp;action=edit">Изменить</a> ';
-		$tasks .= '<a href="?id='.$Row['id'].'&amp;action=done">Выполнить</a>';
-		$tasks .= ' <a href="?id='.$Row['id'].'&amp;action=delete">Удалить</a></td>';
-		$tasks .='<td>'.$users[$Row['assigned_user_id']].'</td>';
-		$tasks .='<td>'.$Row['author'].'</td>';
-		$tasks .='</tr>';
-		$i++;
-	}
-	if ($i <= 0)
-	{
-		$tasks = '<tr> <td colspan="7">Нет данных.</td> </tr>';
-	}
+	if (!isset($_POST['sort_by']) or array_search($_POST['sort_by'], array('date_added', 'is_done', 'description'))) $_POST['sort_by'] = 'date_added';
+	$Result_my = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
+	$Result_assigned = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE task.assigned_user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
 	
 	if (isset($_GET['id']) and $_GET['action'] ==='delete')
 	{
@@ -103,7 +45,7 @@
 	}
 	else if (isset($_GET['id']) and $_GET['action'] === 'done')
 	{
-		mysqli_query($CONNECT, "UPDATE `task` SET `is_done` = 1 WHERE user_id = '${_SESSION['LOGIN_ID']}' AND `id` = '${_GET['id']}' AND assigned_user_id = NULL or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
+		mysqli_query($CONNECT, "UPDATE `task` SET `is_done` = 1 WHERE user_id = '${_SESSION['LOGIN_ID']}' AND `id` = '${_GET['id']}' AND user_id = '${_SESSION['LOGIN_ID']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
 		Location(URL_ADDRESS);
 	}
 	else if (isset($_GET['id']) and $_GET['action'] === 'edit')
@@ -172,7 +114,43 @@
 				<th>Автор</th>
 				<th>Закрепить задачу за пользователем</th>
 			</tr>
-			<?= $my_tasks ?>
+			<?php $i = 0; ?>
+			<?php while ($Row = mysqli_fetch_assoc($Result_my)) : ?>
+			<tr> 
+				<td><?= $Row['description'] ?></td> 
+				<td><?= $Row['date_added'] ?></td>
+			<?php if ($Row['is_done'] == 1): ?>
+				<td><span style="color: green;">Выполнено</span></td>
+			<?php else: ?>
+				<td><span style="color: orange;">В процессе</span></td>
+			<?php endif; ?>
+				<td>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=edit">Изменить</a>
+				<?php if (empty($Row['assigned_user_id'])): ?>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=done">Выполнить</a>
+				<?php endif; ?>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=delete">Удалить</a>
+				</td>
+				<td><?= $users[$Row['assigned_user_id']] ?></td>
+				<td><?= $Row['author'] ?></td>
+				<td> 
+					<form method="POST">
+					<select name="assigned_user_id">
+				<?php foreach ($users as $Key => $Value): ?>
+					<?php if ($Key != $_SESSION['LOGIN_ID'] AND $Key != null): ?>
+					<option value="user_<?= $Key ?>_task_<?= $Row['id'] ?>"><?= $Value ?></option>
+					<?php endif; ?>
+				<?php endforeach; ?>
+					</select> 
+					<input type="submit" name="assign" value="Переложить ответственность">
+					</form> 
+				</td>
+			</tr>
+			<?php $i++; ?> 
+			<?php endwhile; ?>
+			<?php if ($i <= 0): ?> 
+				<tr> <td colspan="7">Нет данных.</td> </tr>
+			<?php endif; ?>
 		</tbody>
 	</table>
 	<p><strong>Также, посмотрите, что от Вас требуют другие люди:</strong></p>
@@ -186,7 +164,29 @@
 				<th>Ответственный</th>
 				<th>Автор</th>
             </tr>
-			<?= $tasks ?>
+			<?php $i = 0; ?>
+			<?php while ($Row = mysqli_fetch_assoc($Result_assigned)): ?>
+			<tr> 
+				<td><?= $Row['description'] ?></td> 
+				<td><?= $Row['date_added'] ?></td>
+			<?php if ($Row['is_done'] == 1): ?>
+				<td><span style="color: green;">Выполнено</span></td>
+			<?php else: ?>
+				<td><span style="color: orange;">В процессе</span></td>
+			<?php endif; ?>
+				<td>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=edit">Изменить</a>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=done">Выполнить</a>
+					<a href="?id=<?= $Row['id'] ?>&amp;action=delete">Удалить</a>
+				</td>
+				<td><?= $users[$Row['assigned_user_id']] ?></td>
+				<td><?= $Row['author'] ?></td>
+			</tr>
+			<?php $i++; ?> 
+			<?php endwhile; ?>
+			<?php if ($i <= 0): ?> 
+				<tr> <td colspan="7">Нет данных.</td> </tr>
+			<?php endif; ?>
 		</tbody>
 	</table>
 	<p><a href="<?= URL_ADDRESS ?>?users=logout">Выход</a></p>

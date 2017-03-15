@@ -4,8 +4,9 @@
 	include_once 'setting.php';
 	include_once 'functions.php';
 	
-	$CONNECT = mysqli_connect(HOST, USER, PASS, DB);
-	mysqli_set_charset($CONNECT, "utf8");
+	$db = new PDO('mysql:host='.HOST.';dbname='.DB.';charset=utf8', USER, PASS);
+	// $CONNECT = mysqli_connect(HOST, USER, PASS, DB);
+	// mysqli_set_charset($CONNECT, "utf8");
 	
 	
 	if (isset($_GET['users']))
@@ -19,7 +20,9 @@
 
 	if (!isset($_SESSION['AUTHENTICATION'])) include(ROOT.'login.php');
 	else include(ROOT.'main.php');
-	//MessageShow();
-	//print_r($_SESSION);
-	mysqli_close($CONNECT);
+	// MessageShow();
+	// print_r($_SESSION);
+	
+	$db = null;
+	// mysqli_close($CONNECT);
 ?>

@@ -9,13 +9,22 @@
 		if ($_POST['save'] == 'Добавить' and !empty($_POST['description']))
 		{
 			$_POST['description'] = FormChars($_POST['description']);
-			mysqli_query($CONNECT, "INSERT INTO `task` (`id`, `user_id`, `assigned_user_id`, `description`, `is_done`, `date_added`) VALUES (NULL, '${_SESSION['LOGIN_ID']}', NULL, '${_POST['description']}', '0', NOW());");
+			$sth = $db->prepare('INSERT INTO `task` (`id`, `user_id`, `assigned_user_id`, `description`, `is_done`, `date_added`) VALUES (NULL, :user_id, NULL, :description, 0, NOW());');
+			$sth->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+			$sth->bindValue(':description', $_POST['description'], PDO::PARAM_STR);
+			$sth->execute();
+			// mysqli_query($CONNECT, "INSERT INTO `task` (`id`, `user_id`, `assigned_user_id`, `description`, `is_done`, `date_added`) VALUES (NULL, '${_SESSION['USER_ID']}', NULL, '${_POST['description']}', '0', NOW())");
 			Location(URL_ADDRESS);
 		}
 		else if ($_POST['save'] == 'Сохранить' and !empty($_POST['update_description']) and isset($_GET['id']))
 		{
 			$_POST['update_description'] = FormChars($_POST['update_description']);
-			mysqli_query($CONNECT, "UPDATE `task` SET `description` = '${_POST['update_description']}' WHERE user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
+			$sth = $db->prepare('UPDATE `task` SET `description` = :description WHERE user_id = :user_id AND id = :id or assigned_user_id = :user_id AND id = :id');
+			$sth->bindValue(':description', $_POST['update_description'], PDO::PARAM_STR);
+			$sth->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+			$sth->bindValue(':id', $_GET['id'], PDO::PARAM_INT);
+			$sth->execute();
+			// mysqli_query($CONNECT, "UPDATE `task` SET `description` = '${_POST['update_description']}' WHERE user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}' or assigned_user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}'");
 			Location(URL_ADDRESS);
 		}
 	}
@@ -23,34 +32,69 @@
 	if (isset($_POST['assign']))
 	{
 		$assigned = explode("_", $_POST['assigned_user_id']);
-		mysqli_query($CONNECT, "UPDATE `task` SET `assigned_user_id` = '${assigned[1]}' WHERE `user_id` = '${_SESSION['LOGIN_ID']}' AND `id` = '${assigned[3]}'");
+		$sth = $db->prepare('UPDATE `task` SET `assigned_user_id` = :assigned_user_id WHERE `user_id` = :usert_id AND `id` = :id');
+		$sth->bindValue(':assigned_user_id', $assigned[1], PDO::PARAM_INT);
+		$sth->bindValue(':usert_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+		$sth->bindValue(':id', $assigned[3], PDO::PARAM_INT);
+		$sth->execute();
+		// mysqli_query($CONNECT, "UPDATE `task` SET `assigned_user_id` = '${assigned[1]}' WHERE `user_id` = '${_SESSION['USER_ID']}' AND `id` = '${assigned[3]}'");
 		Location(URL_ADDRESS);
 	}
 	
 	$users = array(''=>'Вы');
-	$Result = mysqli_query($CONNECT, "SELECT * FROM `user`");
-	while ($Row = mysqli_fetch_assoc($Result)) {
+	$sth = $db->prepare('SELECT * FROM `user`');
+	$sth->execute();
+	while ($Row =  $sth->fetch(PDO::FETCH_ASSOC))
+	{
 		$users[$Row['id']] = $Row['login'];
 	}
+	/* $Result = mysqli_query($CONNECT, "SELECT * FROM `user`");
+	while ($Row = mysqli_fetch_assoc($Result))
+	{
+		$users[$Row['id']] = $Row['login'];
+	} */
 	
 	
 	if (!isset($_POST['sort_by']) or array_search($_POST['sort_by'], array('date_added', 'is_done', 'description'))) $_POST['sort_by'] = 'date_added';
-	$Result_my = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
-	$Result_assigned = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE task.assigned_user_id = '${_SESSION['LOGIN_ID']}' ORDER BY ${_POST['sort_by']}");
+	$My = $db->prepare('SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS author FROM `task` JOIN user ON user.id = task.user_id WHERE user_id = :user_id ORDER BY :sort_by');
+	$My->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+	$My->bindValue(':sort_by', $_POST['sort_by'], PDO::PARAM_STR);
+	$My->execute();
+	
+	$Assigned = $db->prepare('SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS author FROM `task` JOIN user ON user.id = task.user_id WHERE task.assigned_user_id = :user_id ORDER BY :sort_by');
+	$Assigned->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+	$Assigned->bindValue(':sort_by', $_POST['sort_by'], PDO::PARAM_STR);
+	$Assigned->execute();
+	
+	// $Result_my = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE user_id = '${_SESSION['USER_ID']}' ORDER BY ${_POST['sort_by']}");
+	// $Result_assigned = mysqli_query($CONNECT, "SELECT task.id, task.description, task.is_done, task.date_added, task.assigned_user_id, user.login AS 'author' FROM `task` JOIN user ON user.id = task.user_id WHERE task.assigned_user_id = '${_SESSION['USER_ID']}' ORDER BY ${_POST['sort_by']}");
 	
 	if (isset($_GET['id']) and $_GET['action'] ==='delete')
 	{
-		mysqli_query($CONNECT, "DELETE FROM `task` WHERE user_id = '${_SESSION['LOGIN_ID']}' AND `id` = '${_GET['id']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
+		$sth = $db->prepare('DELETE FROM `task` WHERE user_id = :user_id AND `id` = :id or assigned_user_id = :user_id AND id = :id');
+		$sth->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+		$sth->bindValue(':id', $_GET['id'], PDO::PARAM_INT);
+		$sth->execute();
+		// mysqli_query($CONNECT, "DELETE FROM `task` WHERE user_id = '${_SESSION['USER_ID']}' AND `id` = '${_GET['id']}' or assigned_user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}'");
 		Location(URL_ADDRESS);
 	}
 	else if (isset($_GET['id']) and $_GET['action'] === 'done')
 	{
-		mysqli_query($CONNECT, "UPDATE `task` SET `is_done` = 1 WHERE user_id = '${_SESSION['LOGIN_ID']}' AND `id` = '${_GET['id']}' AND user_id = '${_SESSION['LOGIN_ID']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'");
+		$sth = $db->prepare('UPDATE `task` SET `is_done` = 1 WHERE user_id = :user_id AND `id` = :id or assigned_user_id = :user_id AND id = :id');
+		$sth->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+		$sth->bindValue(':id', $_GET['id'], PDO::PARAM_INT);
+		$sth->execute();
+		// mysqli_query($CONNECT, "UPDATE `task` SET `is_done` = 1 WHERE user_id = '${_SESSION['USER_ID']}' AND `id` = '${_GET['id']}' or assigned_user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}'");
 		Location(URL_ADDRESS);
 	}
 	else if (isset($_GET['id']) and $_GET['action'] === 'edit')
 	{
-		$Row = mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT description FROM `task` WHERE user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}' or assigned_user_id = '${_SESSION['LOGIN_ID']}' AND id = '${_GET['id']}'"));
+		$sth = $db->prepare('SELECT description FROM `task` WHERE user_id = :user_id AND id = :id or assigned_user_id = :user_id AND id = :id');
+		$sth->bindValue(':user_id', $_SESSION['USER_ID'], PDO::PARAM_STR);
+		$sth->bindValue(':id', $_GET['id'], PDO::PARAM_INT);
+		$sth->execute();
+		$Row =  $sth->fetch(PDO::FETCH_ASSOC);
+		//$Row = mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT description FROM `task` WHERE user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}' or assigned_user_id = '${_SESSION['USER_ID']}' AND id = '${_GET['id']}'"));
 	}
 	
 ?>
@@ -78,7 +122,7 @@
 
 </head>
 <body>
-	<h1>Здравствуйте, <?= $_SESSION['LOGIN_USERNAME'] ?>!</h1>
+	<h1>Здравствуйте, <?= $_SESSION['USER_LOGIN'] ?>!</h1>
 	<h2>Вот ваш список дел:</h2>
 	<div style="float: left; margin-bottom: 20px;">
 		<form method="POST">
@@ -115,7 +159,8 @@
 				<th>Закрепить задачу за пользователем</th>
 			</tr>
 			<?php $i = 0; ?>
-			<?php while ($Row = mysqli_fetch_assoc($Result_my)) : ?>
+			<?php // while ($Row = mysqli_fetch_assoc($Result_my)) : ?>
+			<?php while ($Row = $My->fetch(PDO::FETCH_ASSOC)) : ?>
 			<tr> 
 				<td><?= $Row['description'] ?></td> 
 				<td><?= $Row['date_added'] ?></td>
@@ -137,7 +182,7 @@
 					<form method="POST">
 					<select name="assigned_user_id">
 				<?php foreach ($users as $Key => $Value): ?>
-					<?php if ($Key != $_SESSION['LOGIN_ID'] AND $Key != null): ?>
+					<?php if ($Key != $_SESSION['USER_ID'] AND $Key != null): ?>
 					<option value="user_<?= $Key ?>_task_<?= $Row['id'] ?>"><?= $Value ?></option>
 					<?php endif; ?>
 				<?php endforeach; ?>
@@ -165,7 +210,8 @@
 				<th>Автор</th>
             </tr>
 			<?php $i = 0; ?>
-			<?php while ($Row = mysqli_fetch_assoc($Result_assigned)): ?>
+			<?php // while ($Row = mysqli_fetch_assoc($Result_assigned)): ?>
+			<?php while ($Row = $Assigned->fetch(PDO::FETCH_ASSOC)): ?>
 			<tr> 
 				<td><?= $Row['description'] ?></td> 
 				<td><?= $Row['date_added'] ?></td>

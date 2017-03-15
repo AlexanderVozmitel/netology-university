@@ -7,28 +7,53 @@
 	{
 		if ($_GET['users'] == 'LoginIn' and isset($_POST['LoginIn']))
 		{
-			$_POST['username'] = FormChars($_POST['username'], true);
-			$_POST['password'] = FormChars($_POST['password']);
+			// $_POST['username'] = FormChars($_POST['username'], true);
+			// $_POST['password'] = FormChars($_POST['password']);
 			if (!$_POST['username'] or !$_POST['password']) MessageSend('Укажите имя пользователя и пароль.');
-			$Row = mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT `password`, `id` FROM `user` WHERE `login` = '${_POST['username']}'"));
-		if ($Row['password'] != md5($_POST['password'])) MessageSend('Имя пользователя или пароль указаны неверно.');
+			$sth = $db->prepare('SELECT * FROM `user` WHERE `login` = :username');
+			$sth->bindValue(':username', $_POST['username'], PDO::PARAM_STR);
+			$sth->execute();
+			$Row = $sth->fetch(PDO::FETCH_ASSOC);
+			//$Row = mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT `password`, `id` FROM `user` WHERE `login` = '${_POST['username']}'"));
+			if ($Row['password'] != md5($_POST['password'])) MessageSend('Имя пользователя или пароль указаны неверно.');
+			$_SESSION['AUTHENTICATION'] = true;
+			unset($Row['password']);
+			foreach ($Row as $Key => $Value) $_SESSION['USER_'.strtoupper($Key)] = $Value;
+			/*	
 			$_SESSION['AUTHENTICATION'] = true;
 			$_SESSION['LOGIN_ID'] = $Row['id'];
 			$_SESSION['LOGIN_USERNAME'] = $_POST['username'];
+			*/
 			Location(URL_ADDRESS);
 		}
 		else if ($_GET['users'] == 'SignUp' and isset($_POST['SignUp']))
 		{
-			$_POST['username'] = FormChars($_POST['username'], true);
-			$_POST['password'] = FormChars($_POST['password']);
+			// $_POST['username'] = FormChars($_POST['username'], true);
+			// $_POST['password'] = FormChars($_POST['password']);
 			if (!$_POST['username'] or !$_POST['password']) MessageSend('Укажите имя пользователя и пароль.');
-			if (mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT `id` FROM `user` WHERE `login` = '${_POST['username']}'"))) MessageSend('Такой пользователь уже зарегистрирован.');
+			$sth = $db->prepare('SELECT `id` FROM `user` WHERE `login` = :username');
+			$sth->bindValue(':username', $_POST['username'], PDO::PARAM_STR);
+			$sth->execute();
+			if ($sth->fetch(PDO::FETCH_ASSOC)['id']) MessageSend('Такой пользователь уже зарегистрирован.');
+			// if (mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT `id` FROM `user` WHERE `login` = '${_POST['username']}'"))) MessageSend('Такой пользователь уже зарегистрирован.');
 			$_POST['password'] = md5($_POST['password']);
-			if (mysqli_query($CONNECT, "INSERT INTO `user` (`id`, `login`, `password`) VALUES (NULL, '${_POST['username']}', '${_POST['password']}')"))
+			$sth = $db->prepare('INSERT INTO `user` (`id`, `login`, `password`) VALUES (NULL, :username, :password)');
+			$sth->bindValue(':username', $_POST['username'], PDO::PARAM_STR);
+			$sth->bindValue(':password', $_POST['password'], PDO::PARAM_STR);
+			if ($sth->execute())
+			// if (mysqli_query($CONNECT, "INSERT INTO `user` (`id`, `login`, `password`) VALUES (NULL, '${_POST['username']}', '${_POST['password']}')"))
 			{
+				$sth = $db->prepare('SELECT `login`, `id` FROM `user` WHERE `login` = :username');
+				$sth->bindValue(':username', $_POST['username'], PDO::PARAM_STR);
+				$sth->execute();
+				$Row = $sth->fetch(PDO::FETCH_ASSOC);
+				$_SESSION['AUTHENTICATION'] = true;
+				foreach ($Row as $Key => $Value) $_SESSION['USER_'.strtoupper($Key)] = $Value;
+				/*
 				$_SESSION['AUTHENTICATION'] = true;
 				$_SESSION['LOGIN_ID'] = mysqli_fetch_assoc(mysqli_query($CONNECT, "SELECT `id` FROM `user` WHERE `login` = '${_POST['username']}'"))['id'];
 				$_SESSION['LOGIN_USERNAME'] = $_POST['username'];
+				*/
 				Location(URL_ADDRESS);
 			}
 		}
